@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('invoicerApp')
-  .controller('NewWorkstreamCtrl', function ($scope, $modalInstance, $http) {
+  .controller('NewWorkstreamCtrl', function ($scope, $modalInstance, $http, $location, $timeout) {
 
     var uri = '/api/workStreams/';
 
@@ -13,8 +13,10 @@ angular.module('invoicerApp')
       if(!form.$invalid){
 
         $http.post(uri, { name: $scope.newWorkstreamCtrl.workstream.name })
-          .then(function(){
+          .then(function(response){
             $modalInstance.dismiss('save');
+
+            $location.url('/workStream/' + response.data._id);
           });
       }
     };

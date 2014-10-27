@@ -1,12 +1,20 @@
 'use strict';
 
 angular.module('invoicerApp')
-  .controller('WorkStreamCtrl', function ($scope, $http, socket, $routeParams) {
+  .controller('WorkStreamCtrl', function ($scope, $http, socket, $routeParams, $modal) {
 
     var uri = '/api/workStreams/';
 
     $scope.workStreamCtrl = {};
     $scope.workStreamCtrl.items = [];
+
+    $scope.workStreamCtrl.newWorkStream = function(){
+      $modal.open({
+        templateUrl: 'app/newWorkstream/newWorkstream.html',
+        controller: 'NewWorkstreamCtrl',
+        backdrop: 'static'
+      });
+    };
 
     function cleanUp(item){
       var newItem = angular.copy(item);
