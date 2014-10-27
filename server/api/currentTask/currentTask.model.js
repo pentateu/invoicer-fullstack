@@ -8,7 +8,8 @@ var CurrenttaskSchema = new Schema({
   totalSeconds:Number,
   date: Date,
   started: Boolean,
-  userId: Schema.Types.ObjectId
+  userId: Schema.Types.ObjectId,
+  workStream: Schema.Types.ObjectId
 });
 
 module.exports = mongoose.model('Currenttask', CurrenttaskSchema);

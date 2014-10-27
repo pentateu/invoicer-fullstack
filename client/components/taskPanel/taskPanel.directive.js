@@ -2,7 +2,7 @@
 
 angular.module('invoicerApp')
   .directive('taskPanel', function ($modal,
-    $http, localStore, $log, Auth) {
+    $http, localStore, $log, Auth, $q) {
     return {
       templateUrl: 'components/taskPanel/taskPanel.html',
       restrict: 'EA',
@@ -24,17 +24,20 @@ angular.module('invoicerApp')
           scope.task.time = '0:00';
           scope.task.seconds = '00';
           scope.task.moment = null;
+          scope.task.workStream = {};
         }
 
         resetTask();
 
         function restoreTaskFromServer(currentTask){
-          scope.task.id = currentTask._id;
-          scope.task.name = currentTask.name;
+          scope.task.id           = currentTask._id;
+          scope.task.name         = currentTask.name;
           scope.task.totalSeconds = currentTask.totalSeconds;
-          scope.task.userId = currentTask.userId;
-          scope.task.date = moment(currentTask.date).toDate();
-          scope.task.started = currentTask.started;
+          scope.task.userId       = currentTask.userId;
+          scope.task.date         = moment(currentTask.date).toDate();
+          scope.task.started      = currentTask.started;
+          scope.task.workStream   = {_id:currentTask.workStream};
+
           adjustMoment();
           formatTime();
 
@@ -46,16 +49,17 @@ angular.module('invoicerApp')
         }
 
         function restoreTaskFromLocalStore(storedTask){
-          scope.task.id = storedTask.id;
-          scope.task.name = storedTask.name;
-          scope.task.editHour = storedTask.editHour;
-          scope.task.started = storedTask.started;
-          scope.task.time = storedTask.time;
-          scope.task.seconds = storedTask.seconds;
+          scope.task.id           = storedTask.id;
+          scope.task.name         = storedTask.name;
+          scope.task.editHour     = storedTask.editHour;
+          scope.task.started      = storedTask.started;
+          scope.task.time         = storedTask.time;
+          scope.task.seconds      = storedTask.seconds;
           scope.task.totalSeconds = storedTask.totalSeconds;
-          scope.task.moment = moment(storedTask.moment);
-          scope.task.date = moment(storedTask.date).toDate();
-          scope.task.userId = storedTask.userId;
+          scope.task.moment       = moment(storedTask.moment);
+          scope.task.date         = moment(storedTask.date).toDate();
+          scope.task.userId       = storedTask.userId;
+          scope.task.workStream   = storedTask.workStream;
 
           if(scope.task.started){
             scope.task.start();
@@ -156,12 +160,30 @@ angular.module('invoicerApp')
 
             formatTime();
 
-            saveTime();
+            return saveTime();
           }
+
+          return $q.reject('Task is not started');
         };
 
         var TaskModalCtrl = function($scope, $modalInstance, task) {
           $scope.task = task;
+
+          $log.debug('TaskModalCtrl -> ', task);
+
+          function matchSelectedWorkStream(){
+            if($scope.workStreams && $scope.task.workStream && $scope.task.workStream._id){
+              var found = $scope.workStreams.find(function(item){
+                return item._id === $scope.task.workStream._id;
+              });
+              if(found){
+                $scope.task.workStream = found;
+              }
+            }
+          }
+
+          matchSelectedWorkStream();
+
           $scope.saveTask = function (form) {
             if( ! form.$invalid){
               $modalInstance.close($scope.task);
@@ -187,6 +209,7 @@ angular.module('invoicerApp')
 
           $http.get('/api/workStreams').success(function(workStreams) {
             $scope.workStreams = workStreams;
+            matchSelectedWorkStream();
           });
 
         };
@@ -276,11 +299,12 @@ angular.module('invoicerApp')
 
         function saveToServer(){
           var objToSave = {
-            name: scope.task.name,
+            name:         scope.task.name,
             totalSeconds: scope.task.totalSeconds,
-            date: scope.task.date,
-            userId: scope.task.userId,
-            started: scope.task.started
+            date:         scope.task.date,
+            userId:       scope.task.userId,
+            started:      scope.task.started,
+            workStream:   scope.task.workStream._id
           };
 
           if(scope.task.id){
@@ -293,6 +317,10 @@ angular.module('invoicerApp')
             return $http.post(url, objToSave)
               .success(function(addedTask){
                 scope.task.id = addedTask._id;
+
+                $log.debug('task saved to the server -> ', addedTask);
+
+                return addedTask;
               })
               .error(function() {
                 $log.debug('could not save new task');
@@ -307,7 +335,7 @@ angular.module('invoicerApp')
           return null;
         }
 
-        //save the current task to local storage
+        //save the current task to local storage and to server
         function saveTime(){
           scope.task.totalSeconds = moment().unix() - scope.task.moment.unix();
 
