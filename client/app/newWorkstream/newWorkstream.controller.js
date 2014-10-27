@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('invoicerApp')
-  .controller('NewWorkstreamCtrl', function ($scope, $modalInstance, $http, $location, $timeout) {
+  .controller('NewWorkstreamCtrl', function ($scope, $modalInstance, $http, $location) {
 
     var uri = '/api/workStreams/';
 

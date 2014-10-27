@@ -2,7 +2,7 @@
 
 angular.module('invoicerApp')
   .directive('taskPanel', function ($modal,
-    $http, localStore, $log, Auth, $q) {
+    $http, localStore, $log, Auth, $q, $location, $routeParams) {
     return {
       templateUrl: 'components/taskPanel/taskPanel.html',
       restrict: 'EA',
@@ -12,6 +12,14 @@ angular.module('invoicerApp')
         var timerRef = null;
 
         scope.task = {};
+
+        function getCurrentWorkStream(){
+          var matcher = /^\/workStream\/(?:([^\/]+))$/;
+          if($location.path().match( matcher )){
+            return {_id:$routeParams.id};
+          }
+          return {};
+        }
 
         function resetTask(){
           scope.task.id = null;
@@ -24,7 +32,7 @@ angular.module('invoicerApp')
           scope.task.time = '0:00';
           scope.task.seconds = '00';
           scope.task.moment = null;
-          scope.task.workStream = {};
+          scope.task.workStream = getCurrentWorkStream();
         }
 
         resetTask();
@@ -176,6 +184,7 @@ angular.module('invoicerApp')
               var found = $scope.workStreams.find(function(item){
                 return item._id === $scope.task.workStream._id;
               });
+
               if(found){
                 $scope.task.workStream = found;
               }

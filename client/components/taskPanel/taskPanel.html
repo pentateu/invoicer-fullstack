@@ -58,7 +58,7 @@
         <div class="form-group">
           <label for="taskTime">Time: </label>
           <div></div>
-          <div class="hoursDisplay" ng-hide="task.editingTime">{{task.time}}<small>:{{task.seconds}}</small></div>
+          <div class="hoursDisplay" ng-dblclick="task.editTime()" ng-hide="task.editingTime">{{task.time}}<small>:{{task.seconds}}</small></div>
           <input id="taskTime"
                   ng-model="task.timeValue"
                   ng-show="task.editingTime"
